@@ -1,26 +1,22 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 This document describes the analysis of the data collected over a 2-year period by a fitness tracker. 
 
 ## Loading and preprocessing the data
 
 The raw data is loaded into memory.
-```{r}
+
+```r
 unzip (zipfile="activity.zip")
 activity <- read.csv("activity.csv")
 ```
 
 The data needs to be properly formatted. For that the *interval* will be converted into a time representation and the *date* in a proper date. 
-```{r}
+
+```r
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
 militaryTime <- sprintf("%04d", activity$interval)
 activity$time <- paste(substr(militaryTime,1,2), substr(militaryTime,3,4),sep=":")
-
 ```
 
 ## What is mean total number of steps taken per day?
@@ -28,11 +24,13 @@ We are going to analyse the distribution of the number of steps that are taken e
 
 For that purpose the daily steps will be summed and the distribution every thousand steps will be observed.
 
-```{r message=FALSE}
+
+```r
 # We suppress the warning message saying that some objetcs are masked by this package
 library(dplyr)
 ```
-```{r}
+
+```r
 daily.steps <- activity %>% 
         group_by(date) %>% 
         summarize (total=sum(steps, na.rm=TRUE))
@@ -49,16 +47,18 @@ daily.steps.median <- round(daily.steps.median, digits=2)
 abline( v = daily.steps.median, col = 3, lty = 2)
 
 legend("topright", c(paste("Mean:",daily.steps.mean),paste("Median:",daily.steps.median)) , col = 2:3, lty = 2)
+```
 
-``` 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
 
-It can be seen that the frequency of days when the subject walks less than 1000 steps a day is the same as when the subject walks between 1000-1100. However the average is **`r daily.steps.mean `** steps with a median value of **`r daily.steps.median`** steps.
+It can be seen that the frequency of days when the subject walks less than 1000 steps a day is the same as when the subject walks between 1000-1100. However the average is **9354.23** steps with a median value of **1.0395\times 10^{4}** steps.
 
 ## What is the average daily activity pattern?
 To answer this question the data will be averaged per 5-minute interval to show what would be an average day.
 
-```{r}
+
+```r
 library(ggplot2)
 average.day <- activity %>% 
         group_by(time) %>% 
@@ -73,22 +73,24 @@ ggplot(average.day, aes (x = factor(time), y = mean, group="time")) +
         scale_x_discrete(breaks=sprintf("%02d:00",seq(00,24, by=2))) + 
         ggtitle("Number of steps in an average day") + xlab("Time") + ylab("Steps") +
         geom_segment(colour="red", lty= 2, aes(x = max.steps$time, y = 0, xend = max.steps$time, yend = max.steps$mean))
-
 ```
 
-In an average day a maximum number of **`r round(max.steps$mean, digits=2)`** steps were taken at **`r max.steps$time`**h
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+In an average day a maximum number of **206.17** steps were taken at **08:35**h
 
 ## Imputing missing values
 The amount of missing values (NA) will be analyzed in order to see how much impact they have in the data. 
 Firstly the total NA values will be computed.
 
-```{r}
+
+```r
 missing.values.total <- sum(is.na(activity$steps))
 missing.values.percentage <- round (missing.values.total / nrow(activity) * 100, digits = 2)
-
 ```
 
-```{r}
+
+```r
 missing.values.per.day <- activity %>%
         group_by(date) %>%
         summarize(sum=sum(is.na(steps)))
@@ -96,16 +98,18 @@ missing.values.per.day <- activity %>%
 days.missing.values <- sum(missing.values.per.day$sum != 0)
 
 barplot(missing.values.per.day$sum, xlab="Days", ylab="Amount of NAs", xpd = FALSE, main="Number of NA values per day")
-
 ```
 
-There is a total of just `r days.missing.values` days missing information. 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
 
-As can be seen the days where values are missing, they correspond the whole day. `r missing.values.percentage`% of the total data is missing. 
+There is a total of just 8 days missing information. 
+
+As can be seen the days where values are missing, they correspond the whole day. 13.11% of the total data is missing. 
 
 The approach to impute the missing values will be to replace them with the average day information.
 
-```{r}
+
+```r
 activity2 <- activity
 
 # Create a function to fill the NAs with the average date
@@ -126,14 +130,14 @@ fillNA <- function(x)
         }
 
 activity2$steps <- apply(activity2, 1, fillNA)
-
 ```
 
 
 
 The new data with imputed values is plotted. 
 
-```{r}
+
+```r
 daily2.steps <- activity2 %>% 
         group_by(date) %>% 
         summarize (total=sum(steps, na.rm=TRUE))
@@ -150,15 +154,17 @@ daily2.steps.median <- round(daily2.steps.median, digits=2)
 abline( v = daily2.steps.median, col = 3, lty = 2)
 
 legend("topright", c(paste("Mean:",daily2.steps.mean),paste("Median:",daily2.steps.median)) , col = 2:3, lty = 2)
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
 
 Comparing to the original values, can be observed that the mean value has risen by imputing the NA values. However, as they were imputed with the average data, the median remains the same.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 First of all we have to factorize the dates and group them into *weekend* and *weekday*.
 
-```{r}
+
+```r
 # Factorize the dates into weekday and weekend
 activity2$weekpart <- as.factor(ifelse(weekdays(activity2$date) %in% c("Saturday","Sunday"), "weekend", "weekday"))
 
@@ -175,12 +181,13 @@ ggplot(average2.day, aes (x = factor(time), y = mean, group=c("time"))) +
         theme_bw() +
         scale_x_discrete(breaks=sprintf("%02d:00",seq(00,24, by=2))) + 
         ggtitle("Number of steps in an average day") + xlab("Time") + ylab("Steps")
-
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
 
-During the `r max2.steps[[1]]$weekpart` a maximum of `r max2.steps[[1]]$mean` steps happen at `r max2.steps[[1]]$time`h.
-However during the `r max2.steps[[2]]$weekpart` a maximum of `r max2.steps[[2]]$mean` steps happen at `r max2.steps[[2]]$time`h.
+
+During the weekday a maximum of 230.3781971 steps happen at 08:35h.
+However during the weekend a maximum of 166.6391509 steps happen at 09:15h.
 
 
 It can be observed that the maximum number of steps happen in the morning for the weekdays and the weekends. However there is a difference in the average number of steps, being higher during the weekdays than on the weekends. 

@@ -169,18 +169,17 @@ average2.day <- activity2 %>%
 # Get the max value
 max2.steps <- by(average2.day, average2.day$weekpart, function(x) { x[which.max(x$mean),] })
 
+#max2.steps.times <- data.frame(weekpart = c(max2.steps[[1]]$weekpart,max2.steps[[2]]$weekpart), time=c(max2.steps[[1]]$time, max2.steps[[2]]$time))
+#max2.steps.times <- as.factor(max2.steps.times$weekpart)
+
 ggplot(average2.day, aes (x = factor(time), y = mean, group=c("time"))) +
         facet_grid(weekpart ~ . ) +
         geom_line(colour="steelblue", size=1) +
         theme_bw() +
         scale_x_discrete(breaks=sprintf("%02d:00",seq(00,24, by=2))) + 
-        ggtitle("Number of steps in an average day") + xlab("Time") + ylab("Steps")
+        ggtitle("Number of steps in an average day") + xlab("Time") + ylab("Steps") +
+        geom_vline(data = max2.steps.times, aes(xintercept = time), colour="red", lty= 2)
 
 ```
-
-
-During the `r max2.steps[[1]]$weekpart` a maximum of `r max2.steps[[1]]$mean` steps happen at `r max2.steps[[1]]$time`h.
-However during the `r max2.steps[[2]]$weekpart` a maximum of `r max2.steps[[2]]$mean` steps happen at `r max2.steps[[2]]$time`h.
-
 
 It can be observed that the maximum number of steps happen in the morning for the weekdays and the weekends. However there is a difference in the average number of steps, being higher during the weekdays than on the weekends. 
